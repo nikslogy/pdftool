@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>PDF Search</title>
+    <!-- Include jQuery from CDN -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        input[type="text"] {
+            width: 300px;
+            padding: 5px;
+        }
+
+        .result {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .result strong {
+            color: #333;
+        }
+
+        .chunk {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+
+        .chunk pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .match {
+            margin: 10px 0;
+            padding-left: 15px;
+            border-left: 3px solid #007bff;
+        }
+
+        .result h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        .raw-text {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f0f0f0;
+        }
+
+        .raw-text pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+
+<body>
+        
+
+    <h2>Upload pdfs</h2>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="pdf_files" multiple accept="application/pdf">
+        <select name="extraction_method">
+            <option value="normal">Normal Extraction</option>
+            <option value="ocr">OCR Extraction</option>
+        </select>
+        <button type="submit">Upload</button>
+    </form>
+    <div id="uploadStatus"></div>
+
+    <h2>Search</h2>
+    <input type="text" id="searchBox" placeholder="Type to search..." autocomplete="off">
+    <div id="results"></div>
+
+    <h2>View Chunks</h2>
+    <button id="toggleChunks">Show/Hide Chunks</button>
+    <div id="chunksDisplay" style="display: none;"></div>
+
+    <h2>View Text</h2>
+    <button id="toggleRawText">Show/Hide Text</button>
+    <div id="rawTextDisplay" style="display: none;"></div>
+
+    <script>
+        $(document).ready(function () {
+            $('#uploadForm').on('submit', function (e) {
+                e.preventDefault();
+                var formData = new FormData(this);
+                $('#uploadStatus').html('<p>Processing files...</p>');
+                $.ajax({
+                    url: '/upload',
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function (response) {
+                        var statusHtml = '<ul>';
+                        response.messages.forEach(function(msg) {
+                            statusHtml += '<li>' + msg + '</li>';
+                        });
+                        statusHtml += '</ul>';
+                        $('#uploadStatus').html(statusHtml);
+                    },
+                    error: function (err) {
+                        $('#uploadStatus').html('<p class="error">Error uploading files.</p>');
+                    }
+                });
+            });
+
+            var searchTimeout;
+            $('#searchBox').on('keyup', function () {
+                clearTimeout(searchTimeout);
+                var query = $(this).val();
+                searchTimeout = setTimeout(function () {
+                    $.ajax({
+                        url: '/search',
+                        type: 'GET',
+                        data: { q: query },
+                        success: function (data) {
+                            $('#results').empty();
+                            <!-- Inside the success callback of the /search AJAX request -->
+                            if (data.results.length === 0) {
+                                $('#results').append('<p>No results found.</p>');
+                            } else {
+                                data.results.forEach(function(result) {
+                                    var resultHtml = '<div class="result">' +
+                                        '<h3>' + result.filename + ' (Score: ' + result.score + ')</h3>';
+                                    
+                                    result.matches.forEach(function(match) {
+                                        resultHtml += '<div class="match">' +
+                                            '<p><strong>Page ' + match.page + ':</strong> ' + match.snippet + '</p>' +
+                                        '</div>';
+                                    });
+                                    
+                                    resultHtml += '</div>';
+                                    $('#results').append(resultHtml);
+                                });
+                            }
+
+                        }
+                    });
+                }, 300); // 300ms debounce delay
+            });
+
+            // Toggle chunks display
+            $('#toggleChunks').click(function() {
+                var chunksDiv = $('#chunksDisplay');
+                if (chunksDiv.is(':hidden')) {
+                    $.get('/get-chunks', function(data) {
+                        chunksDiv.empty();
+                        data.chunks.forEach(function(chunk) {
+                            chunksDiv.append(
+                                '<div class="chunk">' +
+                                '<h3>' + chunk.filename + '</h3>' +
+                                '<pre>' + chunk.text + '</pre>' +
+                                '</div>'
+                            );
+                        });
+                        chunksDiv.show();
+                    });
+                } else {
+                    chunksDiv.hide();
+                }
+            });
+
+            $('#toggleRawText').click(function() {
+                var rawTextDiv = $('#rawTextDisplay');
+                if (rawTextDiv.is(':hidden')) {
+                    $.get('/get-raw-text', function(data) {
+                        rawTextDiv.empty();
+                        data.texts.forEach(function(item) {
+                            rawTextDiv.append(
+                                '<div class="raw-text">' +
+                                '<h3>' + item.filename + '</h3>' +
+                                '<pre>' + item.text + '</pre>' +
+                                '</div>'
+                            );
+                        });
+                        rawTextDiv.show();
+                    });
+                } else {
+                    rawTextDiv.hide();
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
