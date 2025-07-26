@@ -1,0 +1,62 @@
+# Web Framework
+Flask==2.3.3
+Werkzeug==2.3.7
+
+# PDF Processing
+PyMuPDF==1.23.8
+
+# Machine Learning & NLP
+sentence-transformers==2.2.2
+torch==2.1.0
+torchvision==0.16.0
+transformers==4.35.2
+numpy==1.24.3
+scikit-learn==1.3.2
+
+# Natural Language Processing
+spacy==3.7.2
+langdetect==1.0.9
+
+# OCR (Optical Character Recognition)
+pytesseract==0.3.10
+Pillow==10.1.0
+
+# Utilities
+requests==2.31.0
+urllib3==2.0.7
+charset-normalizer==3.3.2
+idna==3.4
+
+# Development & Logging
+click==8.1.7
+itsdangerous==2.1.2
+Jinja2==3.1.2
+MarkupSafe==2.1.3
+blinker==1.7.0
+
+# Additional ML dependencies
+huggingface-hub==0.19.4
+tokenizers==0.15.0
+safetensors==0.4.1
+filelock==3.13.1
+fsspec==2023.12.2
+packaging==23.2
+regex==2023.10.3
+tqdm==4.66.1
+typing-extensions==4.8.0
+
+# Image processing (additional)
+opencv-python==4.8.1.78
+
+# Data handling
+pandas==2.1.4
+python-dateutil==2.8.2
+pytz==2023.3.post1
+six==1.16.0
+
+# Spacy language model (install separately)
+# python -m spacy download en_core_web_sm
+
+# Optional: For better performance
+# accelerate==0.25.0
+# xformers==0.0.23
